@@ -37,8 +37,7 @@ class Calculator(BaseTool):
     def _run(self, expression: AnyStr) -> Any:
 
         response = _evaluate_expression(expression)
-        evidence = response.strip()
-        return evidence
+        return response.strip()
 
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError

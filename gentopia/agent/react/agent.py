@@ -86,15 +86,14 @@ class ReactAgent(BaseAgent):
         regex = (
             r"Action\s*\d*\s*:[\s]*(.*?)[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         )
-        action_match = re.search(regex, text, re.DOTALL)
-        if action_match:
+        if action_match := re.search(regex, text, re.DOTALL):
             if includes_answer:
                 raise Exception(
                     "Parsing LLM output produced both a final answer "
                     f"and a parse-able action: {text}"
                 )
-            action = action_match.group(1).strip()
-            action_input = action_match.group(2)
+            action = action_match[1].strip()
+            action_input = action_match[2]
             tool_input = action_input.strip(" ")
             # ensure if its a well formed SQL query we don't remove any trailing " chars
             if tool_input.startswith("SELECT ") is False:
@@ -149,7 +148,9 @@ class ReactAgent(BaseAgent):
         :rtype: AgentOutput
         """
         self.clear()
-        logging.info(f"Running {self.name + ':' + self.version} with instruction: {instruction}")
+        logging.info(
+            f"Running {self.name}:{self.version} with instruction: {instruction}"
+        )
         total_cost = 0.0
         total_token = 0
 
@@ -220,7 +221,7 @@ class ReactAgent(BaseAgent):
             tool_input = self.intermediate_steps[-1][0].tool_input
             logging.info(f"Action: {action}")
             logging.info(f"Tool Input: {tool_input}")
-            output.update_status("Calling function: {} ...".format(action))
+            output.update_status(f"Calling function: {action} ...")
             result = self._format_function_map()[action](tool_input)
             output.done()
             logging.info(f"Result: {result}")

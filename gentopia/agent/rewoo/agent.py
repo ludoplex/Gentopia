@@ -85,8 +85,8 @@ class RewooAgent(BaseAgent):
         valid_chunk = [line for line in planner_response.splitlines()
                        if line.startswith("#Plan") or line.startswith("#E")]
 
-        plan_to_es = dict()
-        plans = dict()
+        plan_to_es = {}
+        plans = {}
         for line in valid_chunk:
             if line.startswith("#Plan"):
                 plan = line.split(":", 1)[0].strip()
@@ -109,7 +109,7 @@ class RewooAgent(BaseAgent):
         :return: A mapping from #E to tool call and a list of levels.
         :rtype: Tuple[dict[str, str], List[List[str]]]
         """
-        evidences, dependence = dict(), dict()
+        evidences, dependence = {}, {}
         for line in planner_response.splitlines():
             if line.startswith("#E") and line[2].isdigit():
                 e, tool_call = line.split(":", 1)
@@ -125,7 +125,7 @@ class RewooAgent(BaseAgent):
         level = []
         while dependence:
             select = [i for i in dependence if not dependence[i]]
-            if len(select) == 0:
+            if not select:
                 raise ValueError("Circular dependency detected.")
             level.append(select)
             for item in select:
@@ -191,13 +191,20 @@ class RewooAgent(BaseAgent):
         :return: A mapping from #E to tool call.
         :rtype: dict[str, str]
         """
-        worker_evidences = dict()
+        worker_evidences = {}
         plugin_cost, plugin_token = 0.0, 0.0
         with ThreadPoolExecutor() as pool:
             for level in evidences_level:
-                results = []
-                for e in level:
-                    results.append(pool.submit(self._run_plugin, e, planner_evidences, worker_evidences, output))
+                results = [
+                    pool.submit(
+                        self._run_plugin,
+                        e,
+                        planner_evidences,
+                        worker_evidences,
+                        output,
+                    )
+                    for e in level
+                ]
                 if len(results) > 1:
                     output.update_status(f"Running tasks {level} in parallel.")
                 else:
@@ -225,7 +232,9 @@ class RewooAgent(BaseAgent):
         :return: AgentOutput object.
         :rtype: AgentOutput
         """
-        logging.info(f"Running {self.name + ':' + self.version} with instruction: {instruction}")
+        logging.info(
+            f"Running {self.name}:{self.version} with instruction: {instruction}"
+        )
         total_cost = 0.0
         total_token = 0
 

@@ -38,7 +38,7 @@ class LocalLLMManager(BaseLLMManager):
         return config, True
 
     def wait(self, server: LocalServerInfo, limit: int = 10) -> bool:
-        for i in range(limit):
+        for _ in range(limit):
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.connect((server.host, server.port))

@@ -10,11 +10,11 @@ from gentopia.assembler.agent_assembler import AgentAssembler
 @st.cache_resource
 def get_configs(dir: Path):
     assert dir.is_dir()
-    configs = []
-    for file in dir.iterdir():
-        if file.is_file() and file.suffix == '.yaml':
-            configs.append(file)
-    return configs
+    return [
+        file
+        for file in dir.iterdir()
+        if file.is_file() and file.suffix == '.yaml'
+    ]
 
 
 def on_btn_click():

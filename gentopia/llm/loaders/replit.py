@@ -11,8 +11,8 @@ def load_model(loader_model: HuggingfaceLoaderModel):
 
     model = AutoModelForCausalLM.from_pretrained(
         loader_model.base_url,
-        load_in_8bit=True if loader_model.device == "gpu-8bit" else False,
-        load_in_4bit=True if loader_model.device == "gpu-4bit" else False,
+        load_in_8bit=loader_model.device == "gpu-8bit",
+        load_in_4bit=loader_model.device == "gpu-4bit",
         torch_dtype=torch.bfloat16,
         trust_remote_code=True,
     )

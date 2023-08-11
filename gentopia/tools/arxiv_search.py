@@ -32,13 +32,12 @@ class ArxivSearch(BaseTool):
         # except arxiv_exceptions as ex:
         except Exception as ex:
             return f"Arxiv exception: {ex}"
-        docs = [
+        if docs := [
             f"Published: {result.updated.date()}\nTitle: {result.title}\n"
             f"Authors: {', '.join(a.name for a in result.authors)}\n"
             f"Summary: {result.summary}"
             for result in results
-        ]
-        if docs:
+        ]:
             return "\n\n".join(docs)[: doc_content_chars_max]
         else:
             return "No Arxiv Result was found"

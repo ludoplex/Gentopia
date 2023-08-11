@@ -7,7 +7,8 @@ from gentopia.model.param_model import HuggingfaceLoaderModel
 
 def load_model(loader_model: HuggingfaceLoaderModel):
     tokenizer = AutoTokenizer.from_pretrained(
-        loader_model.base_url, use_fast=False if global_vars.model_type == "stable-vicuna" else True
+        loader_model.base_url,
+        use_fast=global_vars.model_type != "stable-vicuna",
     )
     tokenizer.padding_side = "left"
     args, kwargs = loader_model.default_args

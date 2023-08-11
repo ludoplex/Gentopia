@@ -73,7 +73,7 @@ class GradioTool:
             import gradio as gr
 
             GRADIO_INSTALLED = True
-        except (ModuleNotFoundError, ImportError):
+        except ImportError:
             GRADIO_INSTALLED = False
         if not GRADIO_INSTALLED:
             raise ModuleNotFoundError("gradio must be installed to call block_input")
@@ -85,7 +85,7 @@ class GradioTool:
             import gradio as gr
 
             GRADIO_INSTALLED = True
-        except (ModuleNotFoundError, ImportError):
+        except ImportError:
             GRADIO_INSTALLED = False
         if not GRADIO_INSTALLED:
             raise ModuleNotFoundError("gradio must be installed to call block_output")
@@ -96,7 +96,7 @@ class GradioTool:
         """Get the gradio Blocks of this tool for visualization."""
         try:
             import gradio as gr
-        except (ModuleNotFoundError, ImportError):
+        except ImportError:
             raise ModuleNotFoundError("gradio must be installed to call block")
         if not self._block:
             self._block = gr.load(name=self.src, src="spaces")

@@ -83,14 +83,12 @@ class BaseAgent(ABC, BaseModel):
         :return: The function map.
         :rtype: Dict[str, Callable]
         """
-        # Map the function name to the real function object.
-        function_map = {}
-        for plugin in self.plugins:
-            if isinstance(plugin, BaseTool):
-                function_map[plugin.name] = plugin._run
-            else:
-                function_map[plugin.name] = plugin.run
-        return function_map
+        return {
+            plugin.name: plugin._run
+            if isinstance(plugin, BaseTool)
+            else plugin.run
+            for plugin in self.plugins
+        }
 
     def clear(self):
         """

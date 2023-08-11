@@ -17,8 +17,7 @@ class SearchDoc(BaseTool):
     def _run(self, doc_path, query) -> AnyStr:
         loader = TextLoader(doc_path)
         vector_store = VectorstoreIndexCreator().from_loaders([loader])
-        evidence = vector_store.similarity_search(query, k=1)[0].page_content
-        return evidence
+        return vector_store.similarity_search(query, k=1)[0].page_content
 
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError

@@ -33,26 +33,29 @@ class GetTodayWeather(Weather):
         res_completion = requests.get(self.URL_CURRENT_WEATHER, params=param)
         data = json.loads(res_completion.text.strip())
         try:
-            output = {}
-            output["overall"]= f"{data['current']['condition']['text']},\n"
-            output["name"]= f"{data['location']['name']},\n"
-            output["region"]= f"{data['location']['region']},\n"
-            output["country"]= f"{data['location']['country']},\n"
-            output["localtime"]= f"{data['location']['localtime']},\n"
-            output["temperature"]= f"{data['current']['temp_c']}(C), {data['current']['temp_f']}(F),\n"
-            output["percipitation"]= f"{data['current']['precip_mm']}(mm), {data['current']['precip_in']}(inch),\n"
-            output["pressure"]= f"{data['current']['pressure_mb']}(milibar),\n"
-            output["humidity"]= f"{data['current']['humidity']},\n"
-            output["cloud"]= f"{data['current']['cloud']},\n"
-            output["body temperature"]= f"{data['current']['feelslike_c']}(C), {data['current']['feelslike_f']}(F),\n"
-            output["wind speed"]= f"{data['current']['gust_kph']}(kph), {data['current']['gust_mph']}(mph),\n"
-            output["visibility"]= f"{data['current']['vis_km']}(km), {data['current']['vis_miles']}(miles),\n"
-            output["UV index"]= f"{data['current']['uv']},\n"
+            output = {
+                "overall": f"{data['current']['condition']['text']},\n",
+                "name": f"{data['location']['name']},\n",
+                "region": f"{data['location']['region']},\n",
+                "country": f"{data['location']['country']},\n",
+                "localtime": f"{data['location']['localtime']},\n",
+                "temperature": f"{data['current']['temp_c']}(C), {data['current']['temp_f']}(F),\n",
+                "percipitation": f"{data['current']['precip_mm']}(mm), {data['current']['precip_in']}(inch),\n",
+                "pressure": f"{data['current']['pressure_mb']}(milibar),\n",
+                "humidity": f"{data['current']['humidity']},\n",
+                "cloud": f"{data['current']['cloud']},\n",
+                "body temperature": f"{data['current']['feelslike_c']}(C), {data['current']['feelslike_f']}(F),\n",
+                "wind speed": f"{data['current']['gust_kph']}(kph), {data['current']['gust_mph']}(mph),\n",
+                "visibility": f"{data['current']['vis_km']}(km), {data['current']['vis_miles']}(miles),\n",
+                "UV index": f"{data['current']['uv']},\n",
+            }
         except Exception as e:
             return f"Error occured: {e}\n The response fetched: {str(data)}"
-        
-        text_output = f"Today's weather report for {data['location']['name']} is:\n"+"".join([f"{key}: {output[key]}" for key in output.keys()])
-        return text_output
+
+        return (
+            f"Today's weather report for {data['location']['name']} is:\n"
+            + "".join([f"{key}: {output[key]}" for key in output])
+        )
 
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
@@ -73,43 +76,42 @@ class GetFutureWeather(Weather):
     args_schema: Optional[Type[BaseModel]] = GetFutureWeatherArgs
 
     def _run(self, location: AnyStr, days: int) -> AnyStr:
-        param = {
-            "key": self.api_key,
-            "q": location,
-            "days": int(days),
-        }
+        param = {"key": self.api_key, "q": location, "days": days}
         res_completion = requests.get(self.URL_FORECAST_WEATHER, params=param)
         res_completion = json.loads(res_completion.text.strip())
         MAX_DAYS = 3
         try:
-            res_completion = res_completion["forecast"]["forecastday"][int(days)-1 if int(days) < MAX_DAYS else MAX_DAYS-1]
-            output_dict = {}
-            for k, v in res_completion["day"].items():
-                output_dict[k] = v
+            res_completion = res_completion["forecast"]["forecastday"][
+                days - 1 if days < MAX_DAYS else MAX_DAYS - 1
+            ]
+            output_dict = dict(res_completion["day"].items())
             for k, v in res_completion["astro"].items():
                 output_dict[k] = v
-            
-            output = {}
-            output["over all weather"] = f"{output_dict['condition']['text']},\n"
-            output["max temperature"] = f"{output_dict['maxtemp_c']}(C), {output_dict['maxtemp_f']}(F),\n"
-            output["min temperature"] = f"{output_dict['mintemp_c']}(C), {output_dict['mintemp_f']}(F),\n"
-            output["average temperature"] = f"{output_dict['avgtemp_c']}(C), {output_dict['avgtemp_f']}(F),\n"
-            output["max wind speed"] = f"{output_dict['maxwind_kph']}(kph), {output_dict['maxwind_mph']}(mph),\n"
-            output["total precipitation"] = f"{output_dict['totalprecip_mm']}(mm), {output_dict['totalprecip_in']}(inch),\n"
-            output["will rain today"] = f"{output_dict['daily_will_it_rain']},\n"
-            output["chance of rain"] = f"{output_dict['daily_chance_of_rain']},\n"
-            output["total snow"] = f"{output_dict['totalsnow_cm']}(cm),\n"
-            output["will snow today"] = f"{output_dict['daily_will_it_snow']},\n"
-            output["chance of snow"] = f"{output_dict['daily_chance_of_snow']},\n"
-            output["average visibility"] = f"{output_dict['avgvis_km']}(km), {output_dict['avgvis_miles']}(miles),\n"
-            output["average humidity"] = f"{output_dict['avghumidity']},\n"
-            output["UV index"] = f"{output_dict['uv']},\n"
-            output["sunrise time"] = f"{output_dict['sunrise']},\n"
-            output["sunset time"] = f"{output_dict['sunset']},\n"
-            output["moonrise time"] = f"{output_dict['moonrise']},\n"
-            output["moonset time"] = f"{output_dict['moonset']},\n"
-            
-            text_output = f"The weather forecast for {param['q']} at {param['days']} days later is: \n"+"".join([f"{key}: {output[key]}" for key in output.keys()])
+
+            output = {
+                "over all weather": f"{output_dict['condition']['text']},\n",
+                "max temperature": f"{output_dict['maxtemp_c']}(C), {output_dict['maxtemp_f']}(F),\n",
+                "min temperature": f"{output_dict['mintemp_c']}(C), {output_dict['mintemp_f']}(F),\n",
+                "average temperature": f"{output_dict['avgtemp_c']}(C), {output_dict['avgtemp_f']}(F),\n",
+                "max wind speed": f"{output_dict['maxwind_kph']}(kph), {output_dict['maxwind_mph']}(mph),\n",
+                "total precipitation": f"{output_dict['totalprecip_mm']}(mm), {output_dict['totalprecip_in']}(inch),\n",
+                "will rain today": f"{output_dict['daily_will_it_rain']},\n",
+                "chance of rain": f"{output_dict['daily_chance_of_rain']},\n",
+                "total snow": f"{output_dict['totalsnow_cm']}(cm),\n",
+                "will snow today": f"{output_dict['daily_will_it_snow']},\n",
+                "chance of snow": f"{output_dict['daily_chance_of_snow']},\n",
+                "average visibility": f"{output_dict['avgvis_km']}(km), {output_dict['avgvis_miles']}(miles),\n",
+                "average humidity": f"{output_dict['avghumidity']},\n",
+                "UV index": f"{output_dict['uv']},\n",
+                "sunrise time": f"{output_dict['sunrise']},\n",
+                "sunset time": f"{output_dict['sunset']},\n",
+                "moonrise time": f"{output_dict['moonrise']},\n",
+                "moonset time": f"{output_dict['moonset']},\n",
+            }
+            text_output = (
+                f"The weather forecast for {param['q']} at {param['days']} days later is: \n"
+                + "".join([f"{key}: {output[key]}" for key in output])
+            )
         except Exception as e:
             return f"Error occured: {e}. \nThe response fetched is: {str(res_completion)}"
         return text_output

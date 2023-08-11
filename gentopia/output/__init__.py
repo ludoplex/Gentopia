@@ -15,8 +15,14 @@ def enable_log(path: str = "./agent.log", log_level: str= "info", mode: str = "w
         path = "./agent.log"
     os.environ["LOG_LEVEL"] = log_level
     os.environ["LOG_PATH"] = path
-    assert log_level.upper() in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], "Invalid log level."
-    assert mode in ["w", "a"], "Invalid mode."
+    assert log_level.upper() in {
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL",
+    }, "Invalid log level."
+    assert mode in {"w", "a"}, "Invalid mode."
     logging.basicConfig(level=log_level.upper(), filename=path, filemode=mode)
 
 

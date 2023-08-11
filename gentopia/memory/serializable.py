@@ -42,7 +42,7 @@ class Serializable(BaseModel, ABC):
         Return a map of constructor argument names to secret ids.
         eg. {"openai_api_key": "OPENAI_API_KEY"}
         """
-        return dict()
+        return {}
 
     @property
     def gt_attributes(self) -> Dict:
@@ -81,7 +81,7 @@ class Serializable(BaseModel, ABC):
         if not self.gt_serializable:
             return self.to_json_not_implemented()
 
-        secrets = dict()
+        secrets = {}
         # Get latest values for kwargs if there is an attribute with same name
         gt_kwargs = {
             k: getattr(self, k, v)
@@ -99,15 +99,15 @@ class Serializable(BaseModel, ABC):
             this = cast(
                 Serializable, self if cls is None else super(cls, self))
 
-            secrets.update(this.gt_secrets)
-            gt_kwargs.update(this.gt_attributes)
+            secrets |= this.gt_secrets
+            gt_kwargs |= this.gt_attributes
 
         # include all secrets, even if not specified in kwargs
         # as these secrets may be passed as an environment variable instead
-        for key in secrets.keys():
+        for key in secrets:
             secret_value = getattr(self, key, None) or gt_kwargs.get(key)
             if secret_value is not None:
-                gt_kwargs.update({key: secret_value})
+                gt_kwargs[key] = secret_value
 
         return {
             "gt": 1,

@@ -46,7 +46,7 @@ class AgentAssembler:
         elif config is not None:
             self.config = Config.from_dict(config)
 
-        self.plugins: Dict[str, Union[BaseAgent, BaseTool]] = dict()
+        self.plugins: Dict[str, Union[BaseAgent, BaseTool]] = {}
         self.manager: Optional[BaseLLMManager] = None
 
     def get_agent(self, config=None):
@@ -73,7 +73,7 @@ class AgentAssembler:
         description = config.get('description', "")
         AgentClass = AgentType.get_agent_class(_type)
         prompt_template = self._get_prompt_template(config.get('prompt_template'))
-        agent = AgentClass(
+        return AgentClass(
             name=name,
             type=_type,
             version=version,
@@ -82,9 +82,10 @@ class AgentAssembler:
             llm=self._get_llm(config['llm']),
             prompt_template=prompt_template,
             plugins=self._parse_plugins(config.get('plugins', [])),
-            memory=self._parse_memory(config.get('memory', [])) # initialize memory
+            memory=self._parse_memory(
+                config.get('memory', [])
+            ),  # initialize memory
         )
-        return agent
 
     def _parse_memory(self, obj) -> MemoryWrapper:
         """
@@ -112,7 +113,7 @@ class AgentAssembler:
             :return: An LLM instance or dictionary of LLM instances.
             :rtype: Union[BaseLLM, Dict[str, BaseLLM]]
         """
-        assert isinstance(obj, dict) or isinstance(obj, str)
+        assert isinstance(obj, (dict, str))
         if isinstance(obj, dict) and ("model_name" not in obj):
             return {
                 # list(item.keys())[0]: self._parse_llm(list(item.values())[0]) for item in obj
@@ -133,10 +134,10 @@ class AgentAssembler:
         """
         if isinstance(obj, str):
             name = obj
-            model_param = dict()
+            model_param = {}
         else:
             name = obj['model_name']
-            model_param = obj.get('params', dict())
+            model_param = obj.get('params', {})
         llm = None
         if TYPES.get(name, None) == "OpenAI":
             # key = obj.get('key', None)
@@ -166,14 +167,13 @@ class AgentAssembler:
             :return: A prompt template instance.
             :rtype: PromptTemplate
         """
-        assert isinstance(obj, dict) or isinstance(obj, PromptTemplate)
+        assert isinstance(obj, (dict, PromptTemplate))
         if isinstance(obj, dict):
             return {
                 key: self._parse_prompt_template(obj[key]) for key in obj
             }
         else:
-            ans = self._parse_prompt_template(obj)
-            return ans
+            return self._parse_prompt_template(obj)
 
     def _parse_prompt_template(self, obj):
         """
@@ -185,7 +185,7 @@ class AgentAssembler:
             :return: A prompt template instance.
             :rtype: PromptTemplate
         """
-        assert isinstance(obj, dict) or isinstance(obj, PromptTemplate)
+        assert isinstance(obj, (dict, PromptTemplate))
         if isinstance(obj, PromptTemplate):
             return obj
         input_variables = obj['input_variables']
@@ -225,9 +225,8 @@ class AgentAssembler:
                 result.append(agent)
                 self.plugins[plugin['name']] = agent
 
-            # Tool as plugin
             else:
-                params = plugin.get('params', dict())
+                params = plugin.get('params', {})
                 tool = load_tools(plugin['name'])(**params)
                 result.append(tool)
                 self.plugins[plugin['name']] = tool

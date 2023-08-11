@@ -11,7 +11,7 @@ class PluginManager:
     """
 
     def __init__(self, config):
-        if isinstance(config, str) or isinstance(config, Path):
+        if isinstance(config, (str, Path)):
             config = AgentAssembler(file=config)
         elif isinstance(config, list):
             config = AgentAssembler(config=config)

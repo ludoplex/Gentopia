@@ -55,8 +55,7 @@ class Wikipedia(BaseTool):
         if not self.doc_store:
             self.doc_store = DocstoreExplorer(Wiki())
         tool = self.doc_store
-        evidence = tool.search(query)
-        return evidence
+        return tool.search(query)
 
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError

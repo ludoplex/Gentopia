@@ -17,8 +17,7 @@ class TTS(BaseTool):
     def _run(self, text: AnyStr) -> Any:
         bk = BarkTextToSpeechTool()
         path = bk.run(text)
-        ans = f"the audio file saved into: {path}"
-        return ans
+        return f"the audio file saved into: {path}"
 
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
@@ -34,8 +33,7 @@ class ImageCaption(BaseTool):
     args_schema: Optional[Type[BaseModel]] = ImageCaptionArgs
 
     def _run(self, path_to_image: AnyStr) -> Any:
-        ans = ImageCaptioningTool().run(f"{path_to_image}")
-        return ans
+        return ImageCaptioningTool().run(f"{path_to_image}")
 
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
@@ -85,8 +83,7 @@ class ImageToPrompt(BaseTool):
     args_schema: Optional[Type[BaseModel]] = ImageToPromptArgs
 
     def _run(self, path_to_image: AnyStr) -> Any:
-        ans = ClipInterrogatorTool().run(path_to_image)
-        return ans
+        return ClipInterrogatorTool().run(path_to_image)
 
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
