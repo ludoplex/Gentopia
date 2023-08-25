@@ -73,35 +73,31 @@ class OpenAIFunctionChatAgent(BaseAgent):
         :return: Formatted plugin.
         :rtype: Dict
         """
-        if isinstance(plugin, BaseTool):
-            if plugin.args_schema:
-                parameters = plugin.args_schema.schema()
-            else:
-                parameters = {
-                    # This is a hack to get around the fact that some tools
-                    # do not expose an args_schema, and expect an argument
-                    # which is a string.
-                    # And Open AI does not support an array type for the
-                    # parameters.
-                    "properties": {
-                        "__arg1": {"title": "__arg1", "type": "string"},
-                    },
-                    "required": ["__arg1"],
-                    "type": "object",
-                }
-
-            return {
-                "name": plugin.name,
-                "description": plugin.description,
-                "parameters": parameters,
-            }
-        else:
+        if (
+            isinstance(plugin, BaseTool)
+            and plugin.args_schema
+            or not isinstance(plugin, BaseTool)
+        ):
             parameters = plugin.args_schema.schema()
-            return {
-                "name": plugin.name,
-                "description": plugin.description,
-                "parameters": parameters,
+        else:
+            parameters = {
+                # This is a hack to get around the fact that some tools
+                # do not expose an args_schema, and expect an argument
+                # which is a string.
+                # And Open AI does not support an array type for the
+                # parameters.
+                "properties": {
+                    "__arg1": {"title": "__arg1", "type": "string"},
+                },
+                "required": ["__arg1"],
+                "type": "object",
             }
+
+        return {
+            "name": plugin.name,
+            "description": plugin.description,
+            "parameters": parameters,
+        }
 
     def _format_function_schema(self) -> List[Dict]:
         """Format function schema into the open AI function API.
@@ -109,11 +105,7 @@ class OpenAIFunctionChatAgent(BaseAgent):
         :return: Formatted function schema.
         :rtype: List[Dict]
         """
-        # List the function schema.
-        function_schema = []
-        for plugin in self.plugins:
-            function_schema.append(self._format_plugin_schema(plugin))
-        return function_schema
+        return [self._format_plugin_schema(plugin) for plugin in self.plugins]
 
     def run(self, instruction: str, output: Optional[BaseOutput] = None) -> AgentOutput:
         """Run the agent with the given instruction.
@@ -127,9 +119,6 @@ class OpenAIFunctionChatAgent(BaseAgent):
         if output is None:
             output = BaseOutput()
         self.message_scratchpad.append({"role": "user", "content": instruction})
-        total_cost = 0
-        total_token = 0
-
         function_map = self._format_function_map()
         function_schema = self._format_function_schema()
 
@@ -141,8 +130,11 @@ class OpenAIFunctionChatAgent(BaseAgent):
             output.panel_print(response.content)
             # Update message history
             self.message_scratchpad.append(response.message_scratchpad)
+            total_cost = 0
             total_cost += calculate_cost(self.llm.model_name, response.prompt_token,
                                          response.completion_token) + response.plugin_cost
+            total_token = 0
+
             total_token += response.prompt_token + response.completion_token + response.plugin_token
             return AgentOutput(
                 output=response.content,
@@ -193,7 +185,7 @@ class OpenAIFunctionChatAgent(BaseAgent):
             function_name = result["name"]
             fuction_to_call = function_map[function_name]
             function_args = result["arguments"]
-            output.update_status("Calling function: {} ...".format(function_name))
+            output.update_status(f"Calling function: {function_name} ...")
             function_response = fuction_to_call(**function_args)
             output.done()
 

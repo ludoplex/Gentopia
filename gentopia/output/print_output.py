@@ -120,5 +120,4 @@ class BasicOutput:
         :return: The formatted JSON object.
         :rtype: str
         """
-        formatted_json = json.dumps(json_obj, indent=2)
-        return formatted_json
+        return json.dumps(json_obj, indent=2)

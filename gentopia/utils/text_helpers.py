@@ -24,9 +24,4 @@ def get_plugin_response_content(output) -> str:
     :return: The content of the plugin response as a string.
     :rtype: str
     """
-    if isinstance(output, AgentOutput):
-        return output.output
-    # if isinstance(output, list) and len(output) == 1: # remove list token introduced in thread parallel.
-    #     return str(output[0])
-    else:
-        return str(output)
+    return output.output if isinstance(output, AgentOutput) else str(output)

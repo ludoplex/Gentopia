@@ -148,9 +148,8 @@ class BaseTool(ABC, BaseModel, metaclass=ToolMetaclass):
     def args(self) -> dict:
         if self.args_schema is not None:
             return self.args_schema.schema()["properties"]
-        else:
-            schema = create_schema_from_function(self.name, self._run)
-            return schema.schema()["properties"]
+        schema = create_schema_from_function(self.name, self._run)
+        return schema.schema()["properties"]
 
     def _parse_input(
             self,
@@ -199,10 +198,7 @@ class BaseTool(ABC, BaseModel, metaclass=ToolMetaclass):
         if not self.handle_tool_error:
             raise e
         elif isinstance(self.handle_tool_error, bool):
-            if e.args:
-                observation = e.args[0]
-            else:
-                observation = "Tool execution error"
+            observation = e.args[0] if e.args else "Tool execution error"
         elif isinstance(self.handle_tool_error, str):
             observation = self.handle_tool_error
         elif callable(self.handle_tool_error):

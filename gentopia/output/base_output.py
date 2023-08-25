@@ -248,8 +248,7 @@ class BaseOutput:
         str
             The formatted JSON object.
         """
-        formatted_json = json.dumps(json_obj, indent=2)
-        return formatted_json
+        return json.dumps(json_obj, indent=2)
 
 
     def debug(self, content: str, **kwargs):

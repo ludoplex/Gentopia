@@ -56,8 +56,7 @@ class Config:
             :rtype: Dict[AnyStr, Any]
         """
         logging.info(f"Creating Config from file: {path}")
-        config = Config.load(path)
-        return config
+        return Config.load(path)
 
     @staticmethod
     def from_dict(config: Dict[AnyStr, Any]) -> Dict[AnyStr, Any]:
@@ -69,5 +68,5 @@ class Config:
             :return: A dictionary containing the configuration.
             :rtype: Dict[AnyStr, Any]
         """
-        logging.info(f"Creating Config from dictionary")
+        logging.info("Creating Config from dictionary")
         return Config(**config)

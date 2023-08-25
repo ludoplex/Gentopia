@@ -63,15 +63,17 @@ class VanillaAgent(BaseAgent):
         """
         fewshot = self._compose_fewshot_prompt()
         if self.prompt_template is not None:
-            if "fewshot" in self.prompt_template.input_variables:
-                return self.prompt_template.format(fewshot=fewshot, instruction=instruction)
-            else:
-                return self.prompt_template.format(instruction=instruction)
+            return (
+                self.prompt_template.format(
+                    fewshot=fewshot, instruction=instruction
+                )
+                if "fewshot" in self.prompt_template.input_variables
+                else self.prompt_template.format(instruction=instruction)
+            )
+        if self.examples is None:
+            return VanillaPrompt.format(instruction=instruction)
         else:
-            if self.examples is None:
-                return VanillaPrompt.format(instruction=instruction)
-            else:
-                return FewShotVanillaPrompt.format(fewshot=fewshot, instruction=instruction)
+            return FewShotVanillaPrompt.format(fewshot=fewshot, instruction=instruction)
 
     def run(self, instruction: str, output: Optional[BaseOutput] = None) -> AgentOutput:
         """Run the agent given an instruction.

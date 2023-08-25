@@ -36,8 +36,7 @@ class WolframAlpha(BaseTool):
 
     def _run(self, query: AnyStr) -> AnyStr:
         tool = CustomWolframAlphaAPITool()
-        evidence = tool.run(query).replace("Answer:", "").strip()
-        return evidence
+        return tool.run(query).replace("Answer:", "").strip()
 
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError

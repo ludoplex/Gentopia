@@ -241,7 +241,14 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
 
     @property
     def _invocation_params(self) -> Dict:
-        openai_args = {
+        if self.openai_proxy:
+            import openai
+
+            openai.proxy = {
+                "http": self.openai_proxy,
+                "https": self.openai_proxy,
+            }  # type: ignore[assignment]  # noqa: E501
+        return {
             "engine": self.deployment,
             "request_timeout": self.request_timeout,
             "headers": self.headers,
@@ -251,14 +258,6 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
             "api_type": self.openai_api_type,
             "api_version": self.openai_api_version,
         }
-        if self.openai_proxy:
-            import openai
-
-            openai.proxy = {
-                "http": self.openai_proxy,
-                "https": self.openai_proxy,
-            }  # type: ignore[assignment]  # noqa: E501
-        return openai_args
 
     # please refer to
     # https://github.com/openai/openai-cookbook/blob/main/examples/Embedding_long_inputs.ipynb
@@ -392,39 +391,35 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
 
     def _embedding_func(self, text: str, *, engine: str) -> List[float]:
         """Call out to OpenAI's embedding endpoint."""
-        # handle large input text
         if len(text) > self.embedding_ctx_length:
             return self._get_len_safe_embeddings([text], engine=engine)[0]
-        else:
-            if self.model.endswith("001"):
-                # See: https://github.com/openai/openai-python/issues/418#issuecomment-1525939500
-                # replace newlines, which can negatively affect performance.
-                text = text.replace("\n", " ")
-            return embed_with_retry(
-                self,
-                input=[text],
-                **self._invocation_params,
-            )[
-                "data"
-            ][0]["embedding"]
+        if self.model.endswith("001"):
+            # See: https://github.com/openai/openai-python/issues/418#issuecomment-1525939500
+            # replace newlines, which can negatively affect performance.
+            text = text.replace("\n", " ")
+        return embed_with_retry(
+            self,
+            input=[text],
+            **self._invocation_params,
+        )[
+            "data"
+        ][0]["embedding"]
 
     async def _aembedding_func(self, text: str, *, engine: str) -> List[float]:
         """Call out to OpenAI's embedding endpoint."""
-        # handle large input text
         if len(text) > self.embedding_ctx_length:
             return (await self._aget_len_safe_embeddings([text], engine=engine))[0]
-        else:
-            if self.model.endswith("001"):
-                # See: https://github.com/openai/openai-python/issues/418#issuecomment-1525939500
-                # replace newlines, which can negatively affect performance.
-                text = text.replace("\n", " ")
-            return (
-                await async_embed_with_retry(
-                    self,
-                    input=[text],
-                    **self._invocation_params,
-                )
-            )["data"][0]["embedding"]
+        if self.model.endswith("001"):
+            # See: https://github.com/openai/openai-python/issues/418#issuecomment-1525939500
+            # replace newlines, which can negatively affect performance.
+            text = text.replace("\n", " ")
+        return (
+            await async_embed_with_retry(
+                self,
+                input=[text],
+                **self._invocation_params,
+            )
+        )["data"][0]["embedding"]
 
     def embed_documents(
         self, texts: List[str], chunk_size: Optional[int] = 0
@@ -474,8 +469,7 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
         :return: Embedding for the text.
         :rtype: List[float]
         """
-        embedding = self._embedding_func(text, engine=self.deployment)
-        return embedding
+        return self._embedding_func(text, engine=self.deployment)
 
     async def aembed_query(self, text: str) -> List[float]:
         """
@@ -487,5 +481,4 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
         :return: Embedding for the text.
         :rtype: List[float]
         """
-        embedding = await self._aembedding_func(text, engine=self.deployment)
-        return embedding
+        return await self._aembedding_func(text, engine=self.deployment)

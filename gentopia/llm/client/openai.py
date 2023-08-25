@@ -267,5 +267,3 @@ class OpenAIGPTClient(BaseLLM, BaseModel):
 
         except Exception as exception:
             raise exception
-            print("Exception:", exception)
-            return ChatCompletion(state="error", content=str(exception))

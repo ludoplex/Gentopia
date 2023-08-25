@@ -49,17 +49,22 @@ class Planner(BaseModel):
         worker_desctription = self._compose_worker_description()
         fewshot = self._compose_fewshot_prompt()
         if self.prompt_template is not None:
-            if "fewshot" in self.prompt_template.input_variables:
-                return self.prompt_template.format(tool_description=worker_desctription, fewshot=fewshot,
-                                                   task=instruction)
-            else:
-                return self.prompt_template.format(tool_description=worker_desctription, task=instruction)
+            return (
+                self.prompt_template.format(
+                    tool_description=worker_desctription,
+                    fewshot=fewshot,
+                    task=instruction,
+                )
+                if "fewshot" in self.prompt_template.input_variables
+                else self.prompt_template.format(
+                    tool_description=worker_desctription, task=instruction
+                )
+            )
+        if self.examples is not None:
+            return FewShotPlannerPrompt.format(tool_description=worker_desctription, fewshot=fewshot,
+                                               task=instruction)
         else:
-            if self.examples is not None:
-                return FewShotPlannerPrompt.format(tool_description=worker_desctription, fewshot=fewshot,
-                                                   task=instruction)
-            else:
-                return ZeroShotPlannerPrompt.format(tool_description=worker_desctription, task=instruction)
+            return ZeroShotPlannerPrompt.format(tool_description=worker_desctription, task=instruction)
 
     def run(self, instruction: str, output: BaseOutput = BaseOutput()) -> BaseCompletion:
 
@@ -71,7 +76,7 @@ class Planner(BaseModel):
             output.error("Planner failed to retrieve response from LLM")
             raise ValueError("Planner failed to retrieve response from LLM")
         else:
-            output.info(f"Planner run successful.")
+            output.info("Planner run successful.")
             return response
 
     def stream(self, instruction: str, output: BaseOutput = BaseOutput()):

@@ -163,23 +163,21 @@ class MemoryWrapper:
         if self.summary_I != "":
             context_history.append({"role": "system", "content": FormerContextPrompt.format(summary = self.summary_I)})
         for i in list(self.history_queue_I.queue):
-            context_history.append(i[0])
-            context_history.append(i[1])
+            context_history.extend((i[0], i[1]))
         related_history = self.load_history(instruction)
 
         if related_history != "":
-            output.panel_print(related_history, f"[green] Related Conversation Memory: ")
+            output.panel_print(related_history, "[green] Related Conversation Memory: ")
             context_history.append({"role": "user", "content": RelatedContextPrompt.format(related_history=related_history)})
 
         context_history.append({"role": "user", "content": instruction})
 
         if self.summary_II != "":
-            output.panel_print(self.summary_II, f"[green] Summary of Prior Steps: ")
+            output.panel_print(self.summary_II, "[green] Summary of Prior Steps: ")
             context_history.append({"role": "user", "content": RecallPrompt.format(summary = self.summary_II)})
-            
+
         for i in list(self.history_queue_II.queue):
-            context_history.append(i[0])
-            context_history.append(i[1])
+            context_history.extend((i[0], i[1]))
         return context_history
 
     def clear_memory_II(self):

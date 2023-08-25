@@ -41,12 +41,12 @@ def print_tree(obj, indent=0):
         if not attr.startswith('_'):
             value = getattr(obj, attr)
             if not callable(value):
-                if not isinstance(value, dict) and not isinstance(value, list):
-                    print('|   ' * indent + '|--', f'{attr}: {value}')
-                else:
+                if isinstance(value, (dict, list)):
                     if not value:
                         print('|   ' * indent + '|--', f'{attr}: {value}')
                     print('|   ' * indent + '|--', f'{attr}:')
+                else:
+                    print('|   ' * indent + '|--', f'{attr}: {value}')
                 if hasattr(value, '__dict__'):
                     print_tree(value, indent + 1)
                 elif isinstance(value, list):

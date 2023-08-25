@@ -25,9 +25,9 @@ SUPPORTED_LANGS = [
     ("Chinese", "zh"),
 ]
 
-SUPPORTED_LANGS = {lang: code for lang, code in SUPPORTED_LANGS}
+SUPPORTED_LANGS = dict(SUPPORTED_LANGS)
 VOICES = ["Unconditional", "Announcer"]
-SUPPORTED_SPEAKERS = VOICES + [p for p in SUPPORTED_LANGS]
+SUPPORTED_SPEAKERS = VOICES + list(SUPPORTED_LANGS)
 
 NON_SPEECH_TOKENS = [
     "[laughter]",

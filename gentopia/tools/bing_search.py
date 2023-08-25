@@ -49,13 +49,12 @@ class BingAPI:
                 # failed, retry
                 continue
 
-            if result.status_code == 200:
-                result = result.json()
-                # search result returned here
-                return result
-            else:
+            if result.status_code != 200:
                 # failed, retry
                 continue
+            result = result.json()
+            # search result returned here
+            return result
         raise RuntimeError("Failed to access Bing Search API.")
     
     def load_page(self, url : str, max_retry : int = 3) -> Tuple[bool, str]:
@@ -65,7 +64,7 @@ class BingAPI:
                 if res.status_code == 200:
                     res.raise_for_status()
                 else:
-                    raise RuntimeError("Failed to load page, code {}".format(res.status_code))
+                    raise RuntimeError(f"Failed to load page, code {res.status_code}")
             except Exception:
                 # failed, retry
                 res = None
@@ -123,7 +122,7 @@ class BingSearchTop3(BingSearch):
         top3 = self.search_all(query)[:3]
         output = ""
         for idx, item in enumerate(top3):
-            output += "page: " + str(idx+1) + "\n"
+            output += f"page: {str(idx + 1)}" + "\n"
             output += "title: " + item['name'] + "\n"
             output += "summary: " + item['snippet'] + "\n"
         return output
@@ -134,8 +133,7 @@ class BingSearchTop3(BingSearch):
         key_words -- key words want to search
         """
         result = self.search_engine.search(key_words)
-        self.session_data.content = []
-        self.session_data.content.append(ContentItem(CONTENT_TYPE.SEARCH_RESULT, result))
+        self.session_data.content = [ContentItem(CONTENT_TYPE.SEARCH_RESULT, result)]
         self.session_data.curResultChunk = 0
         return self.session_data.content[-1].data["webPages"]["value"]
 
@@ -155,10 +153,7 @@ class BingSearchLoadPage(BingSearch):
 
     def _run(self, idx: int) -> AnyStr:
         href, text = self.load_page(idx-1)
-        if len(text) > 500:
-            return text[:500]
-        else:
-            return text
+        return text[:500] if len(text) > 500 else text
 
     def load_page(self, idx : int) -> AnyStr:
         top = self.session_data.content[-1].data["webPages"]["value"]

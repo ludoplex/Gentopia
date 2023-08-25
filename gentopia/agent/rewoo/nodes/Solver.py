@@ -29,15 +29,19 @@ class Solver(BaseModel):
         """
         fewshot = self._compose_fewshot_prompt()
         if self.prompt_template is not None:
-            if "fewshot" in self.prompt_template.input_variables:
-                return self.prompt_template.format(plan_evidence=plan_evidence, fewshot=fewshot, task=instruction)
-            else:
-                return self.prompt_template.format(plan_evidence=plan_evidence, task=instruction)
+            return (
+                self.prompt_template.format(
+                    plan_evidence=plan_evidence, fewshot=fewshot, task=instruction
+                )
+                if "fewshot" in self.prompt_template.input_variables
+                else self.prompt_template.format(
+                    plan_evidence=plan_evidence, task=instruction
+                )
+            )
+        if self.examples is not None:
+            return FewShotSolverPrompt.format(plan_evidence=plan_evidence, fewshot=fewshot, task=instruction)
         else:
-            if self.examples is not None:
-                return FewShotSolverPrompt.format(plan_evidence=plan_evidence, fewshot=fewshot, task=instruction)
-            else:
-                return ZeroShotSolverPrompt.format(plan_evidence=plan_evidence, task=instruction)
+            return ZeroShotSolverPrompt.format(plan_evidence=plan_evidence, task=instruction)
 
     def run(self, instruction: str, plan_evidence: str, output: BaseOutput = BaseOutput()) -> BaseCompletion:
         output.info("Running Solver")
@@ -49,7 +53,7 @@ class Solver(BaseModel):
         if response.state == "error":
             output.error("Solver failed to retrieve response from LLM")
         else:
-            output.info(f"Solver run successful.")
+            output.info("Solver run successful.")
 
             return response
 

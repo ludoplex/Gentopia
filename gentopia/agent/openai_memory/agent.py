@@ -69,52 +69,42 @@ class OpenAIMemoryChatAgent(OpenAIFunctionChatAgent):
         :return: Formatted tool.
         :rtype: Dict
         """
-        if isinstance(plugin, BaseTool):
-            if plugin.args_schema:
-                parameters = plugin.args_schema.schema()
-            else:
-                parameters = {
-                    # This is a hack to get around the fact that some tools
-                    # do not expose an args_schema, and expect an argument
-                    # which is a string.
-                    # And Open AI does not support an array type for the
-                    # parameters.
-                    "properties": {
-                        "__arg1": {"title": "__arg1", "type": "string"},
-                    },
-                    "required": ["__arg1"],
-                    "type": "object",
-                }
-
-            return {
-                "name": plugin.name,
-                "description": plugin.description,
-                "parameters": parameters,
-            }
-        else:
+        if (
+            isinstance(plugin, BaseTool)
+            and plugin.args_schema
+            or not isinstance(plugin, BaseTool)
+        ):
             parameters = plugin.args_schema.schema()
-            return {
-                "name": plugin.name,
-                "description": plugin.description,
-                "parameters": parameters,
+        else:
+            parameters = {
+                # This is a hack to get around the fact that some tools
+                # do not expose an args_schema, and expect an argument
+                # which is a string.
+                # And Open AI does not support an array type for the
+                # parameters.
+                "properties": {
+                    "__arg1": {"title": "__arg1", "type": "string"},
+                },
+                "required": ["__arg1"],
+                "type": "object",
             }
+
+        return {
+            "name": plugin.name,
+            "description": plugin.description,
+            "parameters": parameters,
+        }
 
     def _format_function_map(self) -> Dict[str, Callable]:
-        # Map the function name to the real function object.
-        function_map = {}
-        for plugin in self.plugins:
-            if isinstance(plugin, BaseTool):
-                function_map[plugin.name] = plugin._run
-            else:
-                function_map[plugin.name] = plugin.run
-        return function_map
+        return {
+            plugin.name: plugin._run
+            if isinstance(plugin, BaseTool)
+            else plugin.run
+            for plugin in self.plugins
+        }
 
     def _format_function_schema(self) -> List[Dict]:
-        # List the function schema.
-        function_schema = []
-        for plugin in self.plugins:
-            function_schema.append(self._format_plugin_schema(plugin))
-        return function_schema
+        return [self._format_plugin_schema(plugin) for plugin in self.plugins]
 
     def run(self, instruction: str, output: Optional[BaseOutput] = None) -> AgentOutput:
         """Run the agent with the given instruction.
@@ -131,9 +121,6 @@ class OpenAIMemoryChatAgent(OpenAIFunctionChatAgent):
             output = BaseOutput()
         self.memory.clear_memory_II()
         message_scratchpad = self.__add_system_prompt(self.memory.lastest_context(instruction, output))
-        total_cost = 0
-        total_token = 0
-
         self.__add_load_memory_tool() # add a tool to load memory
         function_map = self._format_function_map()
         function_schema = self._format_function_schema()
@@ -151,8 +138,11 @@ class OpenAIMemoryChatAgent(OpenAIFunctionChatAgent):
             if len(response.message_scratchpad) != len(message_scratchpad) + 1: # normal case
                 self.memory.save_memory_II(response.message_scratchpad[-3], response.message_scratchpad[-2], output, self.llm)       
 
+            total_cost = 0
             total_cost += calculate_cost(self.llm.model_name, response.prompt_token,
                                          response.completion_token) + response.plugin_cost
+            total_token = 0
+
             total_token += response.prompt_token + response.completion_token + response.plugin_token
             return AgentOutput(
                 output=response.content,
@@ -210,7 +200,7 @@ class OpenAIMemoryChatAgent(OpenAIFunctionChatAgent):
             function_name = result["name"]
             fuction_to_call = function_map[function_name]
             function_args = result["arguments"]
-            output.update_status("Calling function: {} ...".format(function_name))
+            output.update_status(f"Calling function: {function_name} ...")
             function_response = fuction_to_call(**function_args)
             output.done()
 
