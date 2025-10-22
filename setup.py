@@ -31,7 +31,7 @@ setup(
         'attrs',
         'fastapi',
         'geopy',
-        'pydantic==1.9',
+        'pydantic==1.10.13',
         'pytest',
         'PyYAML',
         'requests',
